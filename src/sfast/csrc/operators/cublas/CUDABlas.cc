@@ -311,7 +311,7 @@ void bgemm<at::Half>(CUDABLAS_BGEMM_ARGTYPES(at::Half)) {
 
   cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();
   if (prop->major >= 5){
-    if (at::globalContext().allowFP16ReductionCuBLAS()) {
+    if (at::globalContext().allowFP16ReductionCuBLAS() == at::CuBLASReductionOption::AllowReducedPrecisionWithSplitK) {
       at::Half falpha = alpha;
       at::Half fbeta = beta;
       TORCH_CUDABLAS_CHECK(cublasGemmStridedBatchedExFix(
@@ -490,12 +490,12 @@ void gemm<at::Half>(CUDABLAS_GEMM_ARGTYPES(at::Half)) {
     TORCH_CUDABLAS_CHECK(cublasSetMathMode(handle, CUBLAS_TENSOR_OP_MATH));
 #else
     cublasMath_t cublas_flags = CUBLAS_DEFAULT_MATH;
-    if (!at::globalContext().allowFP16ReductionCuBLAS()) {
+    if (at::globalContext().allowFP16ReductionCuBLAS() != at::CuBLASReductionOption::AllowReducedPrecisionWithSplitK) {
       cublas_flags = static_cast<cublasMath_t>(cublas_flags | CUBLAS_MATH_DISALLOW_REDUCED_PRECISION_REDUCTION);
     }
     TORCH_CUDABLAS_CHECK(cublasSetMathMode(handle, cublas_flags));
 #endif  // defined(CUDA_VERSION) && CUDA_VERSION < 11000
-    if (at::globalContext().allowFP16ReductionCuBLAS()) {
+    if (at::globalContext().allowFP16ReductionCuBLAS() == at::CuBLASReductionOption::AllowReducedPrecisionWithSplitK) {
       at::Half falpha = alpha;
       at::Half fbeta = beta;
       TORCH_CUDABLAS_CHECK(cublasGemmEx_(
