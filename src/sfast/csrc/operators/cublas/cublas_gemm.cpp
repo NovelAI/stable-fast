@@ -9,7 +9,11 @@
 #include <ATen/ExpandUtils.h>
 #include <ATen/OpMathType.h>
 #include <ATen/TensorUtils.h>
+// torch 2.13 removed named tensors entirely (ATen/core/NamedTensor.h, at::Dimname, at::NoNamesGuard and the align_to/rename/refine_names ops all went away), so we include this only where it still exists.
+#if __has_include(<ATen/core/NamedTensor.h>)
 #include <ATen/core/NamedTensor.h>
+#define SFAST_HAS_NAMED_TENSORS 1
+#endif
 #include <ATen/core/Tensor.h>
 #include <ATen/native/Resize.h>
 #include <c10/util/MaybeOwned.h>
@@ -42,6 +46,16 @@
 namespace c10 {
 static auto in_place = std::in_place;
 }
+#endif
+
+#ifndef SFAST_HAS_NAMED_TENSORS
+namespace at {
+// stand-in for the guard torch used to provide: with named tensors gone there is no name propagation left to suppress, so the scope guard has nothing to do.
+struct NoNamesGuard {
+  // the user-provided destructor is what keeps -Wunused-variable quiet at the (now no-op) guard sites
+  ~NoNamesGuard() {}
+};
+} // namespace at
 #endif
 
 namespace sfast {
