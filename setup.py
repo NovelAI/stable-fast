@@ -122,7 +122,10 @@ def get_extensions():
             "-U__CUDA_NO_HALF_CONVERSIONS__",
             "--extended-lambda",
             "-D_ENABLE_EXTENDED_ALIGNED_STORAGE",
-            "-std=c++17",
+            # No -std here on purpose: torch's cpp_extension appends the standard its own headers
+            # need (c++17 up to torch 2.12, c++20 from 2.13 on, and 2.14 hard-errors below c++20),
+            # but only when no -std is already present -- nvcc rejects a second one. Pinning it here
+            # silently held the .cu files a standard behind whatever torch we build against.
             "--ptxas-options=-O2",
             "--ptxas-options=-allow-expensive-optimizations=true",
         ]
